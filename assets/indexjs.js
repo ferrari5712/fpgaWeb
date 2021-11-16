@@ -1,3 +1,5 @@
+
+
 function makeRequest(url){
     httpRequest = new XMLHttpRequest();
     let fpganum = Number(document.getElementById("fpganum").value);
@@ -24,7 +26,7 @@ function makeRequest(url){
     for (let i=0; i<fpganum; i++){
         let progressbar = document.createElement("div");
         progressbar.className = "progress";
-        progressbar.innerHTML = "<img src='/assets/images.jpg'><div class='progress-bar' id='progressbar"+i+"' " +
+        progressbar.innerHTML = "<p>[FPGA"+i+"]</p><img src='/assets/images.jpg'><div class='progress-bar' id='progressbar"+i+"' " +
             "role='progressbar' " +
             "aria-valuenow='0' " +
             "aria-valuemin='0' " +
@@ -105,5 +107,6 @@ var btn = document.getElementById('submitbtn');
 
 btn.addEventListener('click', function(){
     console.log("btn clicked");
+    console.log(hex_sha512('abc123'));
     makeRequest('/fpga_form');
 });
