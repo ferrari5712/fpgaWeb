@@ -5,6 +5,7 @@ function makeRequest(url){
     let fpganum = Number(document.getElementById("fpganum").value);
     let text = document.getElementById("encryptText").value;
     let maxTry = Number(document.getElementById("maxTry").value);
+    let targetPassword = document.getElementById("targetHash").value;
     let newDIV = document.getElementById("result");
     let endFlag = false;
     newDIV.innerHTML = '';
@@ -38,26 +39,31 @@ function makeRequest(url){
 
     for (let j=0; j<fpganum; j++){
         let progressbar = document.getElementById("progressbar"+j);
-        let current_progress = 0;
+        let current_progress = j * maxTry;
+        let barMax = (maxTry * (j + 1))
         progressbar.setAttribute('aria-valuenow', current_progress);
-        progressbar.style.width = current_progress+"%";
+        // progressbar.style.width = current_progress+"%";
+        progressbar.style.width = "0%";
         let interval = setInterval(function () {
-            let randomValue = Math.floor(Math.random() * (100 - 2) + 2);
-            current_progress += randomValue;
+            //let randomValue = Math.floor(Math.random() * (100 - 2) + 2);
+            if(checkSha(text,current_progress,targetPassword)){
+                endFlag = true;
+            }
             if (endFlag === true ) {
                 clearInterval(interval);
             }
-            if (current_progress >= maxTry) {
-                current_progress = maxTry;
+            current_progress += 1;
+            if (current_progress >= barMax-1) {
+                current_progress = barMax-1;
                 totalMax += current_progress;
                 clearInterval(interval);
             }
             progressbar.setAttribute('aria-valuenow', current_progress);
             // progressbar.innerText = current_progress + "% complete";
-            progressbar.innerText = current_progress + "/" + maxTry;
-            progressbar.style.width = ((current_progress/maxTry)*100)+"%";
+            progressbar.innerText = current_progress + "/" + (barMax - 1);
+            progressbar.style.width = (((current_progress - (maxTry * j)) / (barMax - (maxTry * j)))*100)+"%";
             // console.log(current_progress/maxTry)
-        }, 200);
+        }, 50);
     }
 
 
@@ -80,6 +86,15 @@ function makeRequest(url){
 
         }
     }, 500)
+}
+
+function checkSha(password, number, targetPassword) {
+    let testPassword = password + number;
+    if(hex_sha512(testPassword) === targetPassword.toLowerCase()) {
+        return true
+    } else {
+        return false
+    }
 }
 
 function result(){
@@ -107,6 +122,6 @@ var btn = document.getElementById('submitbtn');
 
 btn.addEventListener('click', function(){
     console.log("btn clicked");
-    console.log(hex_sha512('abc123'));
+    console.log(hex_sha512('abc2000'));
     makeRequest('/fpga_form');
 });
