@@ -8,9 +8,12 @@ function makeRequest(url){
     let targetPassword = document.getElementById("targetHash").value;
     let newDIV = document.getElementById("result");
     let endFlag = false;
+    let resultFPGA = "";
+    let resultPassword = "";
     newDIV.innerHTML = '';
     let data = new FormData();
     let totalMax = 0;
+    let targetTotalMax = 0;
     data.append("fpganum", fpganum);
     data.append("encryptText", text);
     if(!httpRequest) {
@@ -18,11 +21,11 @@ function makeRequest(url){
         return false;
     }
 
-    if (maxTry > 2000) {
-        setTimeout(function () {
-            endFlag = true;
-        }, 6000);
-    }
+    // if (maxTry > 2000) {
+    //     setTimeout(function () {
+    //         endFlag = true;
+    //     }, 6000);
+    // }
 
     for (let i=0; i<fpganum; i++){
         let progressbar = document.createElement("div");
@@ -40,7 +43,8 @@ function makeRequest(url){
     for (let j=0; j<fpganum; j++){
         let progressbar = document.getElementById("progressbar"+j);
         let current_progress = j * maxTry;
-        let barMax = (maxTry * (j + 1))
+        let barMax = (maxTry * (j + 1));
+        targetTotalMax += (barMax-1);
         progressbar.setAttribute('aria-valuenow', current_progress);
         // progressbar.style.width = current_progress+"%";
         progressbar.style.width = "0%";
@@ -48,12 +52,15 @@ function makeRequest(url){
             //let randomValue = Math.floor(Math.random() * (100 - 2) + 2);
             if(checkSha(text,current_progress,targetPassword)){
                 endFlag = true;
+                resultFPGA = "FPGA#"+j;
+                resultPassword = text+current_progress;
             }
             if (endFlag === true ) {
                 clearInterval(interval);
             }
             current_progress += 1;
             if (current_progress >= barMax-1) {
+                console.log(current_progress);
                 current_progress = barMax-1;
                 totalMax += current_progress;
                 clearInterval(interval);
@@ -71,30 +78,45 @@ function makeRequest(url){
     // form.submit();
     let requestInterval = setInterval(function () {
         if (endFlag === true) {
-            httpRequest.onreadystatechange = result;
-            httpRequest.open('POST', url);
-            httpRequest.send(data);
+            // httpRequest.onreadystatechange = result;
+            // httpRequest.open('POST', url);
+            // httpRequest.send(data);
+            let newDIV = document.getElementById("result");
+            let resultDIV = document.createElement("div");
+            resultDIV.innerHTML = "<h3>Password Decryption success</h3>" +
+                "<br><p><b>FPGA :</b> "+resultFPGA+"</p>" +
+                "<br><p><b>Input Password : </b>"+resultPassword+"</p>" +
+                "<br><p><b>Hash : </b>"+ targetPassword +"</p>";
+
+            let textnode = document.createTextNode("Password Decryption Success");
+            let textnode2 = document.createTextNode(resultFPGA);
+            let textnode3 = document.createTextNode(resultPassword);
+            let hrnode = document.createElement("hr");
+            newDIV.appendChild(resultDIV);
+            newDIV.appendChild(hrnode);
             clearInterval(requestInterval);
-        }else if(totalMax === maxTry*fpganum){
+        }else if(totalMax === targetTotalMax){
             let newDIV = document.getElementById("result");
             let textnode = document.createTextNode("Decryption failed");
-            let hrnode = document.createElement("hr")
+            let hrnode = document.createElement("hr");
             newDIV.appendChild(textnode);
             newDIV.appendChild(hrnode);
             clearInterval(requestInterval);
         }else{
-
+            //console.log(targetTotalMax);
+            // let newDIV = document.getElementById("result");
+            // let textnode = document.createTextNode("Decryption failed");
+            // let hrnode = document.createElement("hr");
+            // newDIV.appendChild(textnode);
+            // newDIV.appendChild(hrnode);
+            // clearInterval(requestInterval);
         }
     }, 500)
 }
 
 function checkSha(password, number, targetPassword) {
     let testPassword = password + number;
-    if(hex_sha512(testPassword) === targetPassword.toLowerCase()) {
-        return true
-    } else {
-        return false
-    }
+    return hex_sha512(testPassword) === targetPassword.toLowerCase();
 }
 
 function result(){
